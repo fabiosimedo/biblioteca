@@ -1,18 +1,51 @@
-// função livro (primeiro)
 function Livros(_titulo, _autor, _numero) {
   this.titulo = _titulo;
   this.autor = _autor;
   this.numero = _numero;
 }
 
-// UI constructor (segundo)
 function UI() {}
+const ui = new UI();
 
-//função prototipo pega objeto livro como parametro (nono)
+document.querySelector('form').addEventListener('submit', function (e) {
+  const nomeLivro = document.querySelector('#nome-do-livro').value,
+        autoria = document.querySelector('#autoria').value,
+        numeroSerie = document.querySelector('#num-de-serie').value;
+
+  const livro = new Livros(nomeLivro, autoria, numeroSerie);
+
+
+  if(nomeLivro === '' || autoria === '' || numeroSerie === '') {
+    ui.mostraErro('Favor preencher os campos', 'erro');
+  } else {
+    ui.adicionaLivros(livro);    
+    ui.addBooks(livro);    
+
+    ui.mostraErro('Livro adicionado com sucesso', 'sucesso');
+
+    ui.limparCampos(); 
+  }
+
+  e.preventDefault()
+});
+
+
+document.querySelector('#lista-livros').addEventListener('click',
+function(e) {
+  const ui = new UI();
+  
+  if(e.target.className === 'deletar') {
+    ui.deletar(e.target);
+    ui.mostraErro('Livro removido da sua lista', 'sucesso');
+    ui.removerBook()
+  }
+
+  e.preventDefault();
+});
+
 UI.prototype.adicionaLivros = function(livro) {
   const lista = document.querySelector('#lista-livros');
   
-//criar um tr element
   const linha =  document.createElement('tr'); 
   linha.innerHTML = `
      <td>${livro.titulo}</td>
@@ -22,7 +55,7 @@ UI.prototype.adicionaLivros = function(livro) {
   `;
   lista.appendChild(linha);
 }
-//limpar campos
+
 UI.prototype.limparCampos = function() {
   const foc =  document.querySelector('#nome-do-livro');
   document.querySelector('#autoria').value = '';
@@ -39,60 +72,53 @@ UI.prototype.mostraErro = function(menssagem, className) {
   const field = document.querySelector('fieldset');
   sec.insertBefore(div, field);
 
-  setTimeout(function() {
+  setTimeout(() => {
     document.querySelector('.alerta').remove();
   }, 5000);
 }
 
 UI.prototype.deletar = function(target) {
+  if(target.className === 'deletar') target.parentElement.remove();
   if(target.className === 'deletar') {
-    target.parentElement.remove();
+    ui.removerBook(target.previousElementSibling.textContent);
   }
 }
 
-
-// event listeners adicionar livro (terceiro)
-
-document.querySelector('form').addEventListener('submit', function (e) {
-//pegando os valores inseridos no form (quarto) 
-  const nomeLivro = document.querySelector('#nome-do-livro').value,
-        autoria = document.querySelector('#autoria').value,
-        numeroSerie = document.querySelector('#num-de-serie').value;
-
-//instanciando o constructor (quinto)      
-  const livro = new Livros(nomeLivro, autoria, numeroSerie);
-//console.log(livro);//retorna um objeto livro (sexto)
-
-//instanciando o UI (sétimo)
-  const ui = new UI();
-
-  //validar 
-  if(nomeLivro === '' || autoria === '' || numeroSerie === '') {
-    ui.mostraErro('Favor preencher os campos', 'erro');
+UI.prototype.getLs = function() {
+  let books;
+  if(localStorage.getItem('books') === null) {
+    books = [];
   } else {
-  //adicionar livro a lista (oitavo)
-    ui.adicionaLivros(livro);
-
-    ui.mostraErro('Livro adicionado com sucesso', 'sucesso');
-
-  //lipmar campos
-    ui.limparCampos(); 
+    books = JSON.parse(localStorage.getItem('books'));
   }
+    return books;
+}
 
-  console.log(ui);
+UI.prototype.displayBooks = function() {
+  const books = ui.getLs();
+  books.forEach(book => {
+    const ui = new UI;
+    ui.adicionaLivros(book);
+  });
+}
 
-  e.preventDefault()
-});
+UI.prototype.addBooks = function(book) {
+  const books = ui.getLs();
+  books.push(book);
+  localStorage.setItem('books', JSON.stringify(books));
+}
+
+UI.prototype.removerBook = function(numero) {
+  const books = ui.getLs();
+
+  books.forEach((book, index) => {
+    if(book.numero === numero) {
+      books.splice(index, 1)
+    }
+  });
+
+  localStorage.setItem('books', JSON.stringify(books));
+}
 
 
-// event listener deletar livro
-
-document.querySelector('#lista-livros').addEventListener('click',
-function(e) {
-  const ui = new UI();
-  ui.deletar(e.target);
-  ui.mostraErro('Livro removido da sua lista', 'sucesso');
-  
-
-  e.preventDefault();
-});
+document.addEventListener('DOMContentLoaded', ui.displayBooks());
